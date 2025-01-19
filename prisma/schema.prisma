@@ -1,0 +1,159 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// งานที่ให้บริการ ServiceWork ตารางหลัก
+model ServiceWork {
+  id                Int             @id @default(autoincrement())
+  serviceDate       DateTime        @default(now())
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  // ผู้รับบริการ
+  servicerecipient  String
+  affiliationId     Int
+  affiliation       Affiliation     @relation(fields: [affiliationId], references: [id])
+  statusrecipientId Int
+  statusrecipient   StatusRecipient @relation(fields: [statusrecipientId], references: [id])
+  // ผู้ให้บริการ
+  groupworkId       Int
+  groupwork         GroupWork       @relation(fields: [groupworkId], references: [id])
+
+  description String?
+
+  worktypeId Int
+  worktype   WorkType @relation(fields: [worktypeId], references: [id])
+
+  image String?
+
+  servicebudget       ServiceBudget[]
+  totalAmount         Float                 @default(0.0) // เก็บผลรวมจาก ServiceBudget
+  servicerating       ServiceRating[]
+  ServiceWorkEmployee ServiceWorkEmployee[]
+
+  // เพิ่มมาใหม่
+  statusconfirm   Boolean       @default(false)
+  confirmbynameId Int?
+  confirmbyname   ConfirmByName? @relation(fields: [confirmbynameId], references: [id])
+}
+
+// ผู้รับบริการ : ตาราง Affiliation(สังกัด) เชื่อมกับ ServiceWork
+model Affiliation {
+  id              Int           @id @default(autoincrement())
+  affiliationname String        @unique
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  ServiceWork     ServiceWork[]
+}
+
+// ผู้รับบริการ : ตาราง StatusRecipient(สถานะ) เชื่อมกับ ServiceWork
+model StatusRecipient {
+  id                  Int           @id @default(autoincrement())
+  statusrecipientname String        @unique
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+  ServiceWork         ServiceWork[]
+}
+
+// ผู้ให้บริการ : ตาราง GroupWork (กลุ่มงาน) เชื่อมกับ GroupWork
+model GroupWork {
+  id            Int      @id @default(autoincrement())
+  GroupWorkname String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  employee    Employee[]
+  ServiceWork ServiceWork[]
+  WorkType    WorkType[]
+}
+
+// ผู้ให้บริการ : ตาราง Employee (พนักงาน) เชื่อมกับ GroupWork
+model Employee {
+  id                  Int                   @id @default(autoincrement())
+  Employeename        String
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+  groupworkId         Int
+  groupwork           GroupWork             @relation(fields: [groupworkId], references: [id], onDelete: Cascade)
+  ServiceWorkEmployee ServiceWorkEmployee[]
+}
+
+// ผู้ให้บริการ : ตาราง WorkType (ประเภทงาน) เชื่อมกับ GroupWork
+model WorkType {
+  id           Int           @id @default(autoincrement())
+  WorkTypename String
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  groupworkId  Int
+  groupwork    GroupWork     @relation(fields: [groupworkId], references: [id], onDelete: Cascade)
+  ServiceWork  ServiceWork[]
+}
+
+//รายละเอียดงบประมาณ : ตาราง ServiceBudget (งบประมาณการให้บริการ) เชื่อมกับ ServiceWork
+model ServiceBudget {
+  id                Int         @id @default(autoincrement())
+  ServiceBudgetname String
+  Amount            Float
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  serviceworkId     Int
+  servicework       ServiceWork @relation(fields: [serviceworkId], references: [id], onDelete: Cascade)
+}
+
+//คำถาม คะแนน : ตาราง ServiceRating (คะแนนการให้บริการ) เชื่อมกับ ServiceWork
+model ServiceRating {
+  id               Int            @id @default(autoincrement())
+  score            Int
+  questionratingId Int
+  questionrating   QuestionRating @relation(fields: [questionratingId], references: [id], onDelete: Cascade)
+  serviceworkId    Int
+  servicework      ServiceWork    @relation(fields: [serviceworkId], references: [id], onDelete: Cascade)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+}
+
+//คำถาม : ตาราง QuestionRating (คำถาม) เชื่อมกับ ServiceRating
+model QuestionRating {
+  id            Int             @id @default(autoincrement())
+  questionname  String
+  ServiceRating ServiceRating[]
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+}
+
+model Admin {
+  id        Int      @id @default(autoincrement())
+  username  String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ตารางกลาง : เชื่อมโยงระหว่าง ServiceWork กับ Employee
+model ServiceWorkEmployee {
+  id            Int         @id @default(autoincrement())
+  serviceworkId Int
+  servicework   ServiceWork @relation(fields: [serviceworkId], references: [id], onDelete: Cascade)
+  employeeId    Int
+  employee      Employee    @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+}
+
+// เพิ่มมาใหม่
+model ConfirmByName {
+  id          Int           @id @default(autoincrement())
+  name        String
+  rank        String
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  ServiceWork ServiceWork[]
+}
