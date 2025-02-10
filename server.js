@@ -1,4 +1,5 @@
 // Step 1 import ....
+require("dotenv").config();
 const express = require("express");
 const app = express();
 const morgan = require("morgan");
@@ -20,7 +21,7 @@ app.use(express.json({ limit: "20mb" }));
 // Domain ที่อนุญาติ
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: "http://localhost:3000",
   })
 );
 
@@ -28,6 +29,11 @@ app.use("/api", limiter);
 
 readdirSync("./routes").map((c) => app.use("/api", require("./routes/" + c)));
 
+// เพิ่มเส้นทางสำหรับ root
+app.get("/", (req, res) => {
+  res.send("Welcome to the API");
+});
+
 app.use("/assets", express.static("assets"));
 // Step 2 Start Server
-app.listen(5000, () => console.log("Server is running on port 5000"));
+app.listen(8000, () => console.log("Server is running on port 8000"));

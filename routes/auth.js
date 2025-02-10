@@ -9,9 +9,9 @@ const {
   removeAdmin,
 } = require("../controller/auth_controller");
 
-router.post("/register", authChack, register);
+router.post("/register",  register);
 router.post("/login", login);
-router.get("/listadmin", authChack, listadmin);
+router.get("/listadmin",  listadmin);
 router.put("/updateadmin/:id", authChack, updateAdmin);
 router.delete("/removeadmin/:id", authChack, removeAdmin);
 
